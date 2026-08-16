@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { LayoutDashboard, Users, FileText, Receipt, Wallet, ChartBar as BarChart3, Menu, X, Moon, Sun, ChevronLeft, Zap, Settings, LogOut, Calculator, FolderKanban, Repeat } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Receipt, Wallet, BarChart3, Menu, X, Moon, Sun, ChevronLeft, Zap, Settings, LogOut, Calculator, FolderKanban } from 'lucide-react';
 import { useTheme } from '@/lib/theme';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
-export type Page = 'dashboard' | 'clients' | 'quotations' | 'invoices' | 'payments' | 'accounting' | 'projects' | 'subscriptions' | 'reports' | 'settings';
+export type Page = 'dashboard' | 'clients' | 'quotations' | 'invoices' | 'payments' | 'accounting' | 'projects' | 'reports' | 'settings';
 
 const navItems: { id: Page; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -14,7 +14,6 @@ const navItems: { id: Page; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'payments', label: 'Payments', icon: Wallet },
   { id: 'accounting', label: 'Accounting', icon: Calculator },
   { id: 'projects', label: 'Projects', icon: FolderKanban },
-  { id: 'subscriptions', label: 'Subscriptions', icon: Repeat },
   { id: 'reports', label: 'Reports', icon: BarChart3 },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
@@ -52,7 +51,7 @@ export function Sidebar({ page, setPage, collapsed, setCollapsed, mobileOpen, se
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10 shrink-0">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 shrink-0 shadow-lg shadow-primary/30">
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-blue-400 shrink-0 shadow-lg shadow-primary/30">
             <Zap className="w-5 h-5 text-white" fill="white" />
           </div>
           {!collapsed && (
@@ -127,7 +126,7 @@ export function Sidebar({ page, setPage, collapsed, setCollapsed, mobileOpen, se
           </button>
           {!collapsed && (
             <p className="text-[10px] text-sidebar-foreground/40 text-center pt-2 leading-tight">
-              &copy; {new Date().getFullYear()} Zubkas Workspace<br />Workspace.
+              &copy; {new Date().getFullYear()} Zubkas Workspace<br />Powered by Zubkas Technology Pvt. Ltd.
             </p>
           )}
         </div>
@@ -144,7 +143,7 @@ export function MobileTopBar({ setMobileOpen, title }: { setMobileOpen: (v: bool
         <Menu className="w-5 h-5" />
       </button>
       <div className="flex items-center gap-2">
-        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary/70 shadow-md shadow-primary/20">
+        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-blue-400 shadow-md shadow-primary/20">
           <Zap className="w-4 h-4 text-white" fill="white" />
         </div>
         <span className="font-bold text-sm">Zubkas Workspace</span>

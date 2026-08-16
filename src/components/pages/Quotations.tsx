@@ -1,13 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, FileText, Trash2, Eye, Save, X, Receipt, Download, ListPlus, Repeat } from 'lucide-react';
+import { Plus, FileText, Trash2, Eye, Save, X, Receipt, Download, ListPlus } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useSettings, type PaymentAccount } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
 import { calcTotals, formatINR, formatDate, genNumber } from '@/lib/calc';
 import { downloadElementAsPDF } from '@/lib/pdf';
 import { DocHeader, DocClientBox, DocMetaBox, DocItemsTable, DocTotals, DocFooter, useAccent } from '@/components/doc-layout';
-import type { LineItem, DiscountType, TaxType, Quotation, BillingCycle } from '@/lib/types';
-import { computeRenewalDate } from '@/lib/subscription-sync';
+import type { LineItem, DiscountType, TaxType, Quotation } from '@/lib/types';
 import { PageHeader, EmptyState, StatusBadge } from '@/components/shared';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,9 +50,6 @@ export function Quotations({ onNavigate }: { onNavigate?: (p: Page) => void }) {
     }, (items || []).map((it) => ({ description: it.description, quantity: it.quantity, rate: it.rate, amount: it.amount })));
     if (!inv) return;
     await supabase.from('quotations').update({ status: 'converted' }).eq('id', q.id);
-
-    // If a subscription entry already exists for this quotation, keep it linked.
-    // Otherwise, check if this was a subscription-type quote by looking for existing subscription.
     toast({ title: 'Quotation converted to invoice', description: invoiceNumber });
     refresh();
     setInvoicePreview(inv.id);
@@ -119,10 +115,9 @@ export function Quotations({ onNavigate }: { onNavigate?: (p: Page) => void }) {
 }
 
 function QuotationBuilder({ onClose }: { onClose: () => void }) {
-  const { clients, addQuotation, subscriptionCategories } = useData();
+  const { clients, addQuotation } = useData();
   const { settings } = useSettings();
   const { toast } = useToast();
-  const [quotationType, setQuotationType] = useState<'service' | 'subscription'>('service');
   const [clientId, setClientId] = useState('');
   const [issueDate, setIssueDate] = useState(new Date().toISOString().slice(0, 10));
   const [expiryDate, setExpiryDate] = useState('');
@@ -137,16 +132,6 @@ function QuotationBuilder({ onClose }: { onClose: () => void }) {
   });
   const [terms, setTerms] = useState<string[]>([...settings.defaultTerms]);
   const [showPreview, setShowPreview] = useState(false);
-
-  // Subscription-specific fields
-  const [subCategoryId, setSubCategoryId] = useState('');
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>('Monthly');
-  const [subStartDate, setSubStartDate] = useState(new Date().toISOString().slice(0, 10));
-  const [subEndDate, setSubEndDate] = useState('');
-  const subRenewalDate = useMemo(() => {
-    if (!subStartDate) return '';
-    return computeRenewalDate(subStartDate, billingCycle);
-  }, [subStartDate, billingCycle]);
 
   const rates = { gst: settings.gstRate, cgst: settings.cgstRate, sgst: settings.sgstRate };
   const totals = useMemo(() => calcTotals(items, discount, discountType, taxType, rates), [items, discount, discountType, taxType, rates]);
@@ -166,7 +151,6 @@ function QuotationBuilder({ onClose }: { onClose: () => void }) {
   const save = async () => {
     if (!clientId) { toast({ title: 'Select a client', variant: 'destructive' }); return; }
     if (items.some((it) => !it.description.trim())) { toast({ title: 'Fill all line item descriptions', variant: 'destructive' }); return; }
-    if (quotationType === 'subscription' && !subCategoryId) { toast({ title: 'Select a subscription category', variant: 'destructive' }); return; }
     const quoteNumber = genNumber('QT');
     const validItems = items.filter((it) => it.description.trim());
     const quote = await addQuotation({
@@ -188,34 +172,7 @@ function QuotationBuilder({ onClose }: { onClose: () => void }) {
       terms: JSON.stringify(terms.filter((t) => t.trim())),
     }, validItems);
     if (!quote) return;
-
-    // If subscription type, auto-create subscription entry
-    if (quotationType === 'subscription') {
-      const client = clients.find((c) => c.id === clientId);
-      const cat = subscriptionCategories.find((c) => c.id === subCategoryId);
-      const { error: subErr } = await supabase.from('subscriptions').insert({
-        client_id: clientId,
-        client_name: client?.company_name || null,
-        quotation_id: quote.id,
-        category_id: subCategoryId,
-        plan_name: cat?.name || validItems[0]?.description || 'Subscription',
-        amount: totals.subtotal - totals.discountAmount,
-        tax_amount: totals.cgst + totals.sgst + totals.igst,
-        total_amount: totals.total,
-        billing_cycle: billingCycle,
-        start_date: subStartDate,
-        end_date: subEndDate || null,
-        renewal_date: subRenewalDate,
-        status: 'Pending',
-      });
-      if (subErr) {
-        toast({ title: 'Quotation created, but subscription entry failed', description: subErr.message, variant: 'destructive' });
-      } else {
-        toast({ title: 'Subscription quotation created', description: `${quoteNumber} — ${billingCycle} subscription added` });
-      }
-    } else {
-      toast({ title: 'Quotation created', description: quoteNumber });
-    }
+    toast({ title: 'Quotation created', description: quoteNumber });
     onClose();
   };
 
@@ -236,73 +193,6 @@ function QuotationBuilder({ onClose }: { onClose: () => void }) {
         <div className="grid lg:grid-cols-5 gap-0">
           {/* Form */}
           <div className={cn('lg:col-span-3 p-5 space-y-4', showPreview && 'hidden lg:block')}>
-            {/* Quotation Type Toggle */}
-            <div>
-              <Label className="text-xs mb-2 block">Quotation Type</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setQuotationType('service')}
-                  className={cn(
-                    'flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 transition-all text-sm font-medium',
-                    quotationType === 'service' ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:bg-muted text-muted-foreground',
-                  )}
-                >
-                  <FileText className="w-4 h-4" /> Service (One-time)
-                </button>
-                <button
-                  onClick={() => setQuotationType('subscription')}
-                  className={cn(
-                    'flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 transition-all text-sm font-medium',
-                    quotationType === 'subscription' ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:bg-muted text-muted-foreground',
-                  )}
-                >
-                  <Repeat className="w-4 h-4" /> Subscription (Recurring)
-                </button>
-              </div>
-            </div>
-
-            {/* Subscription-specific fields */}
-            {quotationType === 'subscription' && (
-              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3 animate-fade-in">
-                <Label className="text-xs font-semibold text-primary uppercase tracking-wide">Subscription Details</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs">Category *</Label>
-                    <Select value={subCategoryId} onValueChange={setSubCategoryId}>
-                      <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                      <SelectContent>
-                        {subscriptionCategories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Billing Cycle</Label>
-                    <Select value={billingCycle} onValueChange={(v) => setBillingCycle(v as BillingCycle)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Monthly">Monthly</SelectItem>
-                        <SelectItem value="Quarterly">Quarterly</SelectItem>
-                        <SelectItem value="Half-Yearly">Half-Yearly</SelectItem>
-                        <SelectItem value="Yearly">Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Start Date</Label>
-                    <Input type="date" value={subStartDate} onChange={(e) => setSubStartDate(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="text-xs">End Date (optional)</Label>
-                    <Input type="date" value={subEndDate} onChange={(e) => setSubEndDate(e.target.value)} />
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-xs">Next Renewal Date (auto-calculated)</Label>
-                    <Input type="date" value={subRenewalDate} readOnly className="bg-muted/50" />
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Client *</Label>

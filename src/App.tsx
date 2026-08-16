@@ -12,7 +12,6 @@ import { Invoices } from '@/components/pages/Invoices';
 import { Payments } from '@/components/pages/Payments';
 import { Accounting } from '@/components/pages/Accounting';
 import { Projects } from '@/components/pages/Projects';
-import { Subscriptions } from '@/components/pages/Subscriptions';
 import { Reports } from '@/components/pages/Reports';
 import { Settings } from '@/components/pages/Settings';
 import { Toaster } from '@/components/ui/sonner';
@@ -25,26 +24,15 @@ const pageTitles: Record<Page, string> = {
   payments: 'Payments',
   accounting: 'Accounting',
   projects: 'Projects',
-  subscriptions: 'Subscriptions',
   reports: 'Reports',
   settings: 'Settings',
 };
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
-  const [page, setPage] = useState<Page>(() => {
-    const saved = localStorage.getItem('zt-active-tab') as Page | null;
-    const validPages: Page[] = ['dashboard', 'clients', 'quotations', 'invoices', 'payments', 'accounting', 'projects', 'subscriptions', 'reports', 'settings'];
-    if (saved && validPages.includes(saved)) return saved;
-    return 'dashboard';
-  });
+  const [page, setPage] = useState<Page>('dashboard');
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const handleSetPage = (p: Page) => {
-    setPage(p);
-    localStorage.setItem('zt-active-tab', p);
-  };
 
   if (!isAuthenticated) return <Login />;
 
@@ -52,7 +40,7 @@ function AppContent() {
     <div className="flex min-h-screen bg-background">
       <Sidebar
         page={page}
-        setPage={handleSetPage}
+        setPage={setPage}
         collapsed={collapsed}
         setCollapsed={setCollapsed}
         mobileOpen={mobileOpen}
@@ -63,21 +51,20 @@ function AppContent() {
         <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8 max-w-[1600px] w-full mx-auto">
           {page === 'dashboard' && <Dashboard />}
           {page === 'clients' && <Clients />}
-          {page === 'quotations' && <Quotations onNavigate={handleSetPage} />}
+          {page === 'quotations' && <Quotations onNavigate={setPage} />}
           {page === 'invoices' && <Invoices />}
           {page === 'payments' && <Payments />}
           {page === 'accounting' && <Accounting />}
-          {page === 'projects' && <Projects onNavigate={handleSetPage} />}
-          {page === 'subscriptions' && <Subscriptions />}
+          {page === 'projects' && <Projects onNavigate={setPage} />}
           {page === 'reports' && <Reports />}
           {page === 'settings' && <Settings />}
         </main>
         <footer className="hidden lg:block pb-5 pt-2 text-center">
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Zubkas Workspace.
+            &copy; {new Date().getFullYear()} Zubkas Workspace. Powered by Zubkas Technology Private Limited.
           </p>
         </footer>
-        <MobileBottomNav page={page} setPage={handleSetPage} />
+        <MobileBottomNav page={page} setPage={setPage} />
       </div>
     </div>
   );

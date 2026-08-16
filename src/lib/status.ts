@@ -27,19 +27,3 @@ export const paymentMethodConfig: Record<PaymentMethod, { label: string; icon: s
   UPI: { label: 'UPI', icon: 'smartphone' },
   'Bank Transfer': { label: 'Bank Transfer', icon: 'building-2' },
 };
-
-import type { SubscriptionStatus, BillingCycle } from './types';
-
-export const subscriptionStatusConfig: Record<SubscriptionStatus, { label: string; className: string; dot: string }> = {
-  Active: { label: 'Active', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300', dot: 'bg-emerald-500' },
-  Pending: { label: 'Pending', className: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300', dot: 'bg-amber-500' },
-  Overdue: { label: 'Overdue', className: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300', dot: 'bg-red-500' },
-  Cancelled: { label: 'Cancelled', className: 'bg-muted text-muted-foreground', dot: 'bg-muted-foreground' },
-};
-
-export const billingCycleConfig: Record<BillingCycle, { label: string; months: number }> = {
-  Monthly: { label: 'Monthly', months: 1 },
-  Quarterly: { label: 'Quarterly', months: 3 },
-  'Half-Yearly': { label: 'Half-Yearly', months: 6 },
-  Yearly: { label: 'Yearly', months: 12 },
-};

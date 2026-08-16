@@ -5,16 +5,7 @@ interface ThemeCtx { theme: Theme; toggle: () => void; }
 
 const Ctx = createContext<ThemeCtx>({ theme: 'dark', toggle: () => {} });
 
-// 1. நாம் வரையறுத்த 5 பிரத்யேக வண்ணங்களின் துல்லியமான HSL குறியீடுகள்
-export const THEME_PRESETS: Record<string, { hsl: string; hex: string }> = {
-  '#9F0F0F': { hsl: '0 83% 34%', hex: '#9F0F0F' },     // Maroon Red (Default)
-  '#2563EB': { hsl: '221 83% 53%', hex: '#2563EB' },   // Royal Blue
-  '#059669': { hsl: '160 84% 39%', hex: '#059669' },   // Emerald Green
-  '#4F46E5': { hsl: '243 75% 59%', hex: '#4F46E5' },   // Deep Indigo
-  '#0891B2': { hsl: '189 94% 43%', hex: '#0891B2' },   // Midnight Cyan
-};
-
-// 2. HEX Color-ஐ HSL CSS மதிப்பாக மாற்றும் உதவி பங்க்ஷன்
+// 1. HEX Color-ஐ HSL CSS மதிப்பாக மாற்றும் உதவி பங்க்ஷன்
 export function hexToHsl(hex: string): string {
   let c = hex.replace('#', '');
   if (c.length === 3) c = c.split('').map(x => x + x).join('');
@@ -40,20 +31,12 @@ export function hexToHsl(hex: string): string {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
-// 3. CSS Variables-இல் Accent Color-ஐ அப்ளை செய்யும் பங்க்ஷன்
+// 2. CSS Variables-இல் Accent Color-ஐ அப்ளை செய்யும் பங்க்ஷன்
 export function applyAccentColor(hexColor: string) {
-  if (!hexColor) return;
-  const upperHex = hexColor.toUpperCase();
-  const hsl = THEME_PRESETS[upperHex]?.hsl || hexToHsl(hexColor);
-
-  const root = document.documentElement;
-  root.style.setProperty('--primary', hsl);
-  root.style.setProperty('--primary-hover', hsl);
-  root.style.setProperty('--sidebar-primary', hsl);
-  root.style.setProperty('--ring', hsl);
-  root.style.setProperty('--accent', hsl);
-
-  localStorage.setItem('app_theme_color', upperHex);
+  if (!hexColor || !/^#[0-9a-fA-F]{6}$/.test(hexColor)) return;
+  const hsl = hexToHsl(hexColor);
+  document.documentElement.style.setProperty('--primary', hsl);
+  document.documentElement.style.setProperty('--ring', hsl);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -68,10 +51,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     root.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('zt-theme', theme);
-
-    // ஆப் லோட் ஆகும்போதே சேமிக்கப்பட்ட Accent Color-ஐ அப்ளை செய்தல்
-    const savedColor = localStorage.getItem('app_theme_color') || '#9F0F0F';
-    applyAccentColor(savedColor);
   }, [theme]);
 
   return (

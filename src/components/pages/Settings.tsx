@@ -26,14 +26,6 @@ export interface PaymentAccount {
   isDefault: boolean;
 }
 
-const COLOR_PRESETS = [
-  { name: 'Maroon Red', hex: '#9F0F0F' },
-  { name: 'Royal Blue', hex: '#2563EB' },
-  { name: 'Emerald Green', hex: '#059669' },
-  { name: 'Deep Indigo', hex: '#4F46E5' },
-  { name: 'Midnight Cyan', hex: '#0891B2' },
-];
-
 function SaveButton({
   onClick,
   label,
@@ -92,8 +84,8 @@ export function Settings() {
   const [sgstRate, setSgstRate] = useState('9');
   const [defaultTaxType, setDefaultTaxType] = useState('inter');
 
-  // Theme & Styling (5 Color Presets)
-  const [accentColor, setAccentColor] = useState('#9F0F0F');
+  // Theme & Styling
+  const [customHex, setCustomHex] = useState('#9F0F0F');
 
   // Company Profile
   const [company, setCompany] = useState({
@@ -160,10 +152,10 @@ export function Settings() {
         setDefaultTaxType(taxRes.data.default_tax_type || 'inter');
       }
 
-      const storedTheme = localStorage.getItem('app_theme_color');
-      const activeColor = storedTheme || themeRes.data?.accent_color || '#9F0F0F';
-      setAccentColor(activeColor);
-      applyAccentColor(activeColor);
+      if (themeRes.data && themeRes.data.accent_color) {
+        setCustomHex(themeRes.data.accent_color);
+        applyAccentColor(themeRes.data.accent_color);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -252,12 +244,14 @@ export function Settings() {
     }
     setChangingPassword(true);
     try {
+      // 1. Supabase Auth Password Update (only if a session is active)
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData?.session) {
         const { error: authError } = await supabase.auth.updateUser({ password: adminPassword });
         if (authError) console.warn('Supabase Auth password update skipped:', authError.message);
       }
 
+      // 2. Persist password directly in admin_profile (update only password column)
       const { error: dbError } = await supabase
         .from('admin_profile')
         .update({ password: adminPassword, updated_at: new Date().toISOString() })
@@ -290,12 +284,11 @@ export function Settings() {
 
   // Save Theme
   const saveTheme = async () => {
-    applyAccentColor(accentColor);
-    localStorage.setItem('app_theme_color', accentColor);
+    applyAccentColor(customHex);
     const { error } = await supabase.from('theme_settings').upsert({
       id: 'default',
       appearance_mode: theme,
-      accent_color: accentColor,
+      accent_color: customHex,
       updated_at: new Date().toISOString()
     });
     if (error) throw error;
@@ -316,7 +309,7 @@ export function Settings() {
   const addAccount = () => {
     const newAcc: PaymentAccount = {
       id: `acc-${Date.now()}`,
-      accountName: company.name || 'Sample Enterprise Pvt Ltd',
+      accountName: company.name,
       bankName: '',
       branchName: '',
       accountNumber: '',
@@ -404,28 +397,28 @@ export function Settings() {
                 <Label>Company Name</Label>
                 <div className="relative mt-1.5">
                   <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input value={company.name} onChange={(e) => updateCompany('name', e.target.value)} placeholder="e.g. Acme Enterprise" className="pl-10" />
+                  <Input value={company.name} onChange={(e) => updateCompany('name', e.target.value)} className="pl-10" />
                 </div>
               </div>
               <div>
                 <Label>Email</Label>
                 <div className="relative mt-1.5">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input value={company.email} onChange={(e) => updateCompany('email', e.target.value)} placeholder="contact@example.com" className="pl-10" />
+                  <Input value={company.email} onChange={(e) => updateCompany('email', e.target.value)} className="pl-10" />
                 </div>
               </div>
               <div>
                 <Label>Phone</Label>
                 <div className="relative mt-1.5">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input value={company.phone} onChange={(e) => updateCompany('phone', e.target.value)} placeholder="+91 98765 43210" className="pl-10" />
+                  <Input value={company.phone} onChange={(e) => updateCompany('phone', e.target.value)} className="pl-10" />
                 </div>
               </div>
               <div>
                 <Label>Website</Label>
                 <div className="relative mt-1.5">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input value={company.website} onChange={(e) => updateCompany('website', e.target.value)} placeholder="https://example.com" className="pl-10" />
+                  <Input value={company.website} onChange={(e) => updateCompany('website', e.target.value)} className="pl-10" />
                 </div>
               </div>
             </div>
@@ -434,7 +427,7 @@ export function Settings() {
               <Label>Address</Label>
               <div className="relative mt-1.5">
                 <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                <Textarea value={company.address} onChange={(e) => updateCompany('address', e.target.value)} placeholder="Street address, City, State, ZIP" className="pl-10 min-h-[60px]" />
+                <Textarea value={company.address} onChange={(e) => updateCompany('address', e.target.value)} className="pl-10 min-h-[60px]" />
               </div>
             </div>
 
@@ -486,31 +479,31 @@ export function Settings() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">Account Name</Label>
-                    <Input value={acc.accountName} onChange={(e) => updateAccount(acc.id, 'accountName', e.target.value)} placeholder="Sample Enterprise Pvt Ltd" className="mt-1" />
+                    <Input value={acc.accountName} onChange={(e) => updateAccount(acc.id, 'accountName', e.target.value)} placeholder="Zubkas Technology Pvt Ltd" className="mt-1" />
                   </div>
                   <div>
                     <Label className="text-xs">Bank Name</Label>
-                    <Input value={acc.bankName} onChange={(e) => updateAccount(acc.id, 'bankName', e.target.value)} placeholder="Demo Commercial Bank" className="mt-1" />
+                    <Input value={acc.bankName} onChange={(e) => updateAccount(acc.id, 'bankName', e.target.value)} placeholder="ICICI Bank" className="mt-1" />
                   </div>
                   <div>
                     <Label className="text-xs">Branch Name</Label>
-                    <Input value={acc.branchName} onChange={(e) => updateAccount(acc.id, 'branchName', e.target.value)} placeholder="Main Commercial Branch" className="mt-1" />
+                    <Input value={acc.branchName} onChange={(e) => updateAccount(acc.id, 'branchName', e.target.value)} placeholder="Chennai - Broadway" className="mt-1" />
                   </div>
                   <div>
                     <Label className="text-xs">Account Number</Label>
-                    <Input value={acc.accountNumber} onChange={(e) => updateAccount(acc.id, 'accountNumber', e.target.value)} placeholder="98765432100012" className="mt-1 font-mono" />
+                    <Input value={acc.accountNumber} onChange={(e) => updateAccount(acc.id, 'accountNumber', e.target.value)} placeholder="412105000842" className="mt-1 font-mono" />
                   </div>
                   <div>
                     <Label className="text-xs">IFSC Code</Label>
-                    <Input value={acc.ifsc} onChange={(e) => updateAccount(acc.id, 'ifsc', e.target.value)} placeholder="DEMO0001234" className="mt-1 font-mono" />
+                    <Input value={acc.ifsc} onChange={(e) => updateAccount(acc.id, 'ifsc', e.target.value)} placeholder="ICIC0004121" className="mt-1 font-mono" />
                   </div>
                   <div>
                     <Label className="text-xs">Swift Code</Label>
-                    <Input value={acc.swiftCode} onChange={(e) => updateAccount(acc.id, 'swiftCode', e.target.value)} placeholder="DEMOINBBXXX" className="mt-1 font-mono" />
+                    <Input value={acc.swiftCode} onChange={(e) => updateAccount(acc.id, 'swiftCode', e.target.value)} placeholder="ICICINBBXXX" className="mt-1 font-mono" />
                   </div>
                   <div className="sm:col-span-2">
                     <Label className="text-xs">UPI ID</Label>
-                    <Input value={acc.upiId} onChange={(e) => updateAccount(acc.id, 'upiId', e.target.value)} placeholder="companyname@okhdfcbank" className="mt-1" />
+                    <Input value={acc.upiId} onChange={(e) => updateAccount(acc.id, 'upiId', e.target.value)} placeholder="zubkastechnology@upi" className="mt-1" />
                   </div>
                 </div>
               </div>
@@ -681,34 +674,21 @@ export function Settings() {
               </div>
             </div>
 
-            {/* 5 Preset Color Circles */}
-            <div className="space-y-3">
-              <Label>Accent Color Preset</Label>
+            <div>
+              <Label>Custom Accent Color</Label>
               <div className="flex items-center gap-3 mt-2">
-                {COLOR_PRESETS.map((c) => {
-                  const isSelected = accentColor.toUpperCase() === c.hex.toUpperCase();
-                  return (
-                    <button
-                      key={c.hex}
-                      type="button"
-                      onClick={() => {
-                        setAccentColor(c.hex);
-                        applyAccentColor(c.hex);
-                        localStorage.setItem('app_theme_color', c.hex);
-                      }}
-                      className={cn(
-                        'w-10 h-10 rounded-full transition-all flex items-center justify-center border-2 shadow-sm relative',
-                        isSelected
-                          ? 'ring-2 ring-offset-2 ring-primary border-white scale-110'
-                          : 'border-transparent opacity-85 hover:opacity-100 hover:scale-105'
-                      )}
-                      style={{ backgroundColor: c.hex }}
-                      title={c.name}
-                    >
-                      {isSelected && <Check className="w-5 h-5 text-white drop-shadow-md stroke-[2.5]" />}
-                    </button>
-                  );
-                })}
+                <input
+                  type="color"
+                  value={customHex}
+                  onChange={(e) => setCustomHex(e.target.value)}
+                  className="w-12 h-10 rounded-lg border border-border cursor-pointer bg-card p-1"
+                />
+                <Input
+                  value={customHex}
+                  onChange={(e) => setCustomHex(e.target.value)}
+                  placeholder="#9F0F0F"
+                  className="font-mono max-w-[160px]"
+                />
               </div>
             </div>
 

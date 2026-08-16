@@ -139,34 +139,6 @@ export interface Transaction {
   created_at: string;
 }
 
-export type BillingCycle = 'Monthly' | 'Quarterly' | 'Half-Yearly' | 'Yearly';
-export type SubscriptionStatus = 'Active' | 'Pending' | 'Overdue' | 'Cancelled';
-
-export interface SubscriptionCategory {
-  id: string;
-  name: string;
-  description: string | null;
-  created_at: string;
-}
-
-export interface Subscription {
-  id: string;
-  client_id: string;
-  client_name: string | null;
-  quotation_id: string | null;
-  category_id: string | null;
-  plan_name: string;
-  amount: number;
-  tax_amount: number;
-  total_amount: number;
-  billing_cycle: BillingCycle;
-  start_date: string;
-  end_date: string | null;
-  renewal_date: string;
-  status: SubscriptionStatus;
-  created_at: string;
-}
-
 export type ProjectStatus = 'not_started' | 'in_progress' | 'on_hold' | 'completed';
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'completed';
 export type TaskPriority = 'low' | 'medium' | 'high';

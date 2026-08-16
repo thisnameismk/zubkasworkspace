@@ -72,9 +72,12 @@ export function Login() {
   const verifyAdminEmail = async (inputEmail: string) => {
     const cleanInput = inputEmail.toLowerCase().trim();
     
+    // Always allow the primary default email
+    if (cleanInput === 'zubkastechnology@gmail.com') return true;
+
     try {
       const { data } = await supabase.from('admin_profile').select('admin_email').maybeSingle();
-      if (!data || !data.admin_email) return true;
+      if (!data) return cleanInput === 'zubkastechnology@gmail.com';
 
       const dbEmail = (data.admin_email || '').toLowerCase().trim();
       return dbEmail ? dbEmail === cleanInput : true;
@@ -91,10 +94,11 @@ export function Login() {
     try {
       // 1. Check Admin Profile for updated credentials (admin_email + password)
       const { data: adminData } = await supabase.from('admin_profile').select('admin_email, password').maybeSingle();
-      const dbEmail = adminData?.admin_email || '';
-      const dbPassword = adminData?.password || '';
+      const dbEmail = adminData?.admin_email || 'zubkastechnology@gmail.com';
+      const dbPassword = adminData?.password || 'Zubkas@2036';
 
-      if (dbEmail && dbPassword && email.toLowerCase().trim() === dbEmail.toLowerCase() && password === dbPassword) {
+      // Allow login if email matches and password matches DB or default
+      if (email.toLowerCase().trim() === dbEmail.toLowerCase() && (password === dbPassword || password === 'Zubkas@2036')) {
         await login(email, password);
         toast.success('Successfully signed in!');
         window.location.href = '/';
@@ -186,7 +190,7 @@ export function Login() {
 
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 h-full text-sidebar-foreground">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/70 shadow-2xl shadow-primary/30">
+            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-blue-400 shadow-2xl shadow-primary/30">
               <Zap className="w-6 h-6 text-white" fill="white" />
             </div>
             <div>
@@ -223,7 +227,7 @@ export function Login() {
 
           <div className="flex items-center gap-2 text-xs text-sidebar-foreground/40">
             <ShieldCheck className="w-4 h-4" />
-            <span>Workspace</span>
+            <span>Powered by Zubkas Technology</span>
           </div>
         </div>
       </div>
@@ -235,7 +239,7 @@ export function Login() {
 
         <div className="relative z-10 w-full max-w-md animate-slide-up">
           <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/70 shadow-2xl shadow-primary/30 mb-3">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-400 shadow-2xl shadow-primary/30 mb-3">
               <Zap className="w-7 h-7 text-white" fill="white" />
             </div>
             <h1 className="text-xl font-bold tracking-tight">Zubkas Workspace</h1>
@@ -283,7 +287,7 @@ export function Login() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@company.com"
+                      placeholder="zubkastechnology@gmail.com"
                       className="pl-10 h-11"
                       autoComplete="email"
                       required
@@ -476,7 +480,7 @@ export function Login() {
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-6">
-            &copy; {new Date().getFullYear()} Zubkas Workspace.
+            &copy; {new Date().getFullYear()} Zubkas Workspace. Powered by Zubkas Technology Private Limited.
           </p>
         </div>
       </div>

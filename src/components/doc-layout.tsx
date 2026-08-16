@@ -225,7 +225,7 @@ export function DocFooter({
 
       <div className="mt-4 pt-3 border-t border-gray-100">
         <p className="text-[10px] text-gray-400 text-center">
-          This is a computer-generated document.
+          This is a computer-generated document &nbsp;|&nbsp; Powered by Zubkas Technology Private Limited &nbsp;|&nbsp; www.zubkas.com
         </p>
       </div>
     </div>

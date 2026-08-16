@@ -43,11 +43,11 @@ export const accentPresets: Record<Exclude<AccentKey, 'custom'>, { label: string
 };
 
 export function getAccentHex(accent: AccentKey, customAccent?: string): string {
-  if (accent === 'custom') return customAccent || '#9f0f0f';
+  if (accent === 'custom') return customAccent || '#0ea5e9';
   const map: Record<string, string> = {
     blue: '#0ea5e9', teal: '#0d9488', emerald: '#059669', indigo: '#4f46e5',
   };
-  return map[accent] || '#9f0f0f';
+  return map[accent] || '#0ea5e9';
 }
 
 export function hexToHsl(hex: string): { h: string; s: string; l: string } {
@@ -78,16 +78,16 @@ export function hexToHsl(hex: string): { h: string; s: string; l: string } {
 
 const defaultCompany: CompanyProfile = {
   logo: '',
-  name: 'Your Company Name',
-  email: '',
-  phone: '',
-  website: '',
-  address: '',
-  gstin: '',
+  name: 'Zubkas Technology Private Limited',
+  email: 'zubkastechnology@gmail.com',
+  phone: '+91 98765 43210',
+  website: 'www.zubkastechnology.com',
+  address: 'Plot No. 24, IT Park, Hinjewadi Phase 2, Pune, Maharashtra 411057',
+  gstin: '27ABCDE1234F1Z5',
 };
 
 const defaultPaymentAccounts: PaymentAccount[] = [
-  { id: 'acc-1', label: 'Primary Account', accountName: 'Sample Enterprise Pvt Ltd', bankName: 'Demo Commercial Bank', accountNumber: '98765432100012', ifsc: 'DEMO0001234', upiId: 'companyname@okhdfcbank', isDefault: true },
+  { id: 'acc-1', label: 'HDFC Primary', accountName: 'Zubkas Technology Pvt Ltd', bankName: 'HDFC Bank', accountNumber: '50200012345678', ifsc: 'HDFC0001234', upiId: 'zubkastechnology@upi', isDefault: true },
 ];
 
 const defaultTerms = [
@@ -101,8 +101,8 @@ const defaultSettings: AppSettings = {
   cgstRate: 9,
   sgstRate: 9,
   defaultTaxType: 'intra',
-  accent: 'custom',
-  customAccent: '#9f0f0f',
+  accent: 'blue',
+  customAccent: '#0ea5e9',
   company: defaultCompany,
   paymentAccounts: defaultPaymentAccounts,
   defaultTerms,

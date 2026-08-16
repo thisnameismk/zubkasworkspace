@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Client, Invoice, Payment, Quotation, IncomeCategory, ExpenseCategory, Transaction, Project, Task, Subscription, SubscriptionCategory } from '@/lib/types';
+import type { Client, Invoice, Payment, Quotation, IncomeCategory, ExpenseCategory, Transaction, Project, Task } from '@/lib/types';
 
 export interface DataState {
   clients: Client[];
@@ -12,8 +12,6 @@ export interface DataState {
   transactions: Transaction[];
   projects: Project[];
   tasks: Task[];
-  subscriptions: Subscription[];
-  subscriptionCategories: SubscriptionCategory[];
   loading: boolean;
   refresh: () => Promise<void>;
   addClient: (client: Partial<Client>) => Promise<any>;
@@ -31,8 +29,6 @@ export const DataContext = createContext<DataState>({
   transactions: [],
   projects: [],
   tasks: [],
-  subscriptions: [],
-  subscriptionCategories: [],
   loading: true,
   refresh: async () => {},
   addClient: async () => {},
@@ -54,13 +50,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [subscriptionCategories, setSubscriptionCategories] = useState<SubscriptionCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
     setLoading(true);
-    const [c, q, i, p, ic, ec, t, pr, tk, sub, subcat] = await Promise.all([
+    const [c, q, i, p, ic, ec, t, pr, tk] = await Promise.all([
       supabase.from('clients').select('*').order('created_at', { ascending: false }),
       supabase.from('quotations').select('*').order('created_at', { ascending: false }),
       supabase.from('invoices').select('*').order('created_at', { ascending: false }),
@@ -70,12 +64,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       supabase.from('transactions').select('*').order('transaction_date', { ascending: false }),
       supabase.from('projects').select('*').order('created_at', { ascending: false }),
       supabase.from('tasks').select('*').order('sort_order', { ascending: true }),
-      supabase.from('subscriptions').select('*').order('created_at', { ascending: false }),
-      supabase.from('subscription_categories').select('*').order('name', { ascending: true }),
     ]);
-
-    setSubscriptions(sub.data || []);
-    setSubscriptionCategories(subcat.data || []);
 
     setClients(c.data || []);
     setQuotations(q.data || []);
@@ -136,7 +125,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DataContext.Provider value={{ clients, quotations, invoices, payments, incomeCategories, expenseCategories, transactions, projects, tasks, subscriptions, subscriptionCategories, loading, refresh, addClient, addInvoice, addQuotation }}>
+    <DataContext.Provider value={{ clients, quotations, invoices, payments, incomeCategories, expenseCategories, transactions, projects, tasks, loading, refresh, addClient, addInvoice, addQuotation }}>
       {children}
     </DataContext.Provider>
   );
